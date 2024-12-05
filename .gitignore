@@ -15,6 +15,7 @@
 node_modules
 dist
 tmp
+apps/api/src/protos/gen
 
 .nx/cache
 .nx/workspace-data
