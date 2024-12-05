@@ -25,7 +25,7 @@
         "esbuildOptions": {
           "sourcemap": true,
           "outExtension": {
-            ".js": ".js"
+            ".js": ".mjs"
           }
         }
       },
