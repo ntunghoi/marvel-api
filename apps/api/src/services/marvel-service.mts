@@ -18,6 +18,36 @@ const composeUrl = ({
     .digest('hex')
   return `${BASE_URL}${path ?? ''}?apikey=${publicKey}&ts=${ts}&hash=${hash}`
 }
+
+const getListSchema = <ItemType extends z.ZodTypeAny>(itemSchema: ItemType) =>
+  z.object({
+    available: z.coerce.number().int().optional(),
+    returned: z.coerce.number().int().optional(),
+    collectionURI: z.string().url().optional(),
+    items: z.array(itemSchema),
+  })
+
+const ComicsSummarySchema = z.object({
+  resourceURI: z.string().url().optional(),
+  name: z.string().optional(),
+})
+
+const StorySummarySchema = z.object({
+  resourceURI: z.string().url().optional(),
+  name: z.string().optional(),
+  type: z.string().optional(),
+})
+
+const EventSummarySchema = z.object({
+  resourceURI: z.string().url().optional(),
+  name: z.string().optional(),
+})
+
+const SeriesSummarySchema = z.object({
+  reourceURI: z.string().url().optional(),
+  name: z.string().optional(),
+})
+
 const MarvelPublicCharactersResponseSchema = z.object({
   code: z.number().nonnegative(),
   status: z.string().min(1),
@@ -40,15 +70,22 @@ const MarvelPublicCharactersResponseSchema = z.object({
           extension: z.string(),
         }),
         resourceURI: z.string().url(),
-        comics: z.object({
-          available: z.number().nonnegative(),
-          collectionURI: z.string().url(),
-        }),
+        comics: getListSchema(ComicsSummarySchema),
+        stories: getListSchema(StorySummarySchema),
+        events: getListSchema(EventSummarySchema),
+        series: getListSchema(SeriesSummarySchema),
+        urls: z
+          .object({
+            type: z.string().optional(),
+            url: z.string().url().optional(),
+          })
+          .array(),
       })
       .array(),
   }),
 })
-type MarvelPublicCharactersResponseType = z.infer<
+
+export type MarvelPublicCharactersResponseType = z.infer<
   typeof MarvelPublicCharactersResponseSchema
 >
 export class MarvelClient {
@@ -64,7 +101,7 @@ export class MarvelClient {
     this._publicKey = publicKey
     this._privateKey = privateKey
   }
-  retriever = async () => {
+  getComicCharacters = async () => {
     const response = await fetch(
       composeUrl({
         publicKey: this._publicKey,
@@ -73,9 +110,11 @@ export class MarvelClient {
       })
     )
     if (!response.ok) {
-      const statusCode = response.status
+      const status = response.status
       const text = await response.text()
-      throw new Error(`Error in retrieving data: ${text}`)
+      throw new Error(
+        `Error with status (${status}) in retrieving data: ${text}`
+      )
     }
     const json = await response.json()
     console.log('%o', json)

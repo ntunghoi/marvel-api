@@ -2,9 +2,10 @@ export default {
   displayName: 'api',
   preset: '../../jest.preset.js',
   testEnvironment: 'node',
+  testMatch: ['**/?(*.)+(spec|test).m[tj]s'],
   transform: {
-    '^.+\\.[tj]s$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.spec.json' }],
+    '^.+\\.m[tj]s$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.spec.json' }],
   },
-  moduleFileExtensions: ['ts', 'js', 'html'],
+  moduleFileExtensions: ['ts', 'js', 'mts', 'html'],
   coverageDirectory: '../../coverage/apps/api',
-};
+}

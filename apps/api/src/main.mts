@@ -32,7 +32,7 @@ const main = async () => {
       publicKey: config.marvel.publicKey,
       privateKey: config.marvel.privateKey,
     })
-    await marvelClient.retriever()
+    await marvelClient.getComicCharacters()
   } catch (error) {
     console.log(`Error in running the application: ${error}`)
   }
