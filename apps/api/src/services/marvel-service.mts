@@ -1,22 +1,36 @@
 import crypto from 'crypto'
+import { URLSearchParams } from 'url'
 import * as z from 'zod'
+import dayjs from 'dayjs'
 
 const BASE_URL = `https://gateway.marvel.com`
 const composeUrl = ({
   publicKey,
   privateKey,
   path,
+  setQueryString,
 }: {
   publicKey: string
   privateKey: string
   path?: string
+  setQueryString?: (searchParams: URLSearchParams) => void
 }): string => {
   const ts = new Date().getTime()
   const hash = crypto
     .createHash('md5')
     .update(`${ts}${privateKey}${publicKey}`)
     .digest('hex')
-  return `${BASE_URL}${path ?? ''}?apikey=${publicKey}&ts=${ts}&hash=${hash}`
+
+  const url = new URL(`${BASE_URL}${path ?? ''}`)
+  url.searchParams.set('apikey', publicKey)
+  url.searchParams.set('ts', ts.toString())
+  url.searchParams.set('hash', hash)
+
+  if (setQueryString !== null && setQueryString !== undefined) {
+    setQueryString(url.searchParams)
+  }
+
+  return url.toString()
 }
 
 const getListSchema = <ItemType extends z.ZodTypeAny>(itemSchema: ItemType) =>
@@ -65,6 +79,10 @@ const MarvelPublicCharactersResponseSchema = z.object({
         id: z.number().nonnegative(),
         name: z.string().min(1),
         description: z.string().min(0),
+        modified: z
+          .string()
+          .min(1)
+          .transform((rawValue) => dayjs(rawValue, 'YYYY-MM-DDTHH:MM:SSZZ')),
         thumbnail: z.object({
           path: z.string().url(),
           extension: z.string(),
@@ -88,6 +106,20 @@ const MarvelPublicCharactersResponseSchema = z.object({
 export type MarvelPublicCharactersResponseType = z.infer<
   typeof MarvelPublicCharactersResponseSchema
 >
+
+const GetComicCharactersParamsSchema = z.object({
+  name: z.string().optional(),
+  nameStartsWith: z.string().optional(),
+  modifiedSince: z.date().optional(),
+  comics: z.string().array().optional(),
+  series: z.string().array().optional(),
+  events: z.string().array().optional(),
+  stories: z.string().array().optional(),
+  orderBy: z.enum(['name', 'modified', '-name', '-modified']).optional(),
+  limit: z.coerce.number().int().min(1).optional(),
+  offset: z.coerce.number().int().nonnegative().optional(),
+})
+
 export class MarvelClient {
   _privateKey: string
   _publicKey: string
@@ -101,14 +133,32 @@ export class MarvelClient {
     this._publicKey = publicKey
     this._privateKey = privateKey
   }
-  getComicCharacters = async () => {
-    const response = await fetch(
-      composeUrl({
-        publicKey: this._publicKey,
-        privateKey: this._privateKey,
-        path: '/v1/public/characters',
-      })
-    )
+  getComicCharacters = async (
+    params?: z.infer<typeof GetComicCharactersParamsSchema>
+  ) => {
+    const url = composeUrl({
+      publicKey: this._publicKey,
+      privateKey: this._privateKey,
+      path: '/v1/public/characters',
+      setQueryString: (searchParams: URLSearchParams) => {
+        Object.entries(params).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            if (key === 'modifiedSince') {
+              searchParams.set(key, dayjs(value as Date).format('YYYY-MM-DD'))
+            } else if (typeof value === 'string') {
+              searchParams.set(key, value)
+            } else if (typeof value === 'number' && value > 0) {
+              searchParams.set(key, value.toString())
+            } else if (Array.isArray(value)) {
+              value.forEach((token) => {
+                searchParams.set(key, token.toString())
+              })
+            }
+          }
+        })
+      },
+    })
+    const response = await fetch(url)
     if (!response.ok) {
       const status = response.status
       const text = await response.text()
@@ -117,7 +167,6 @@ export class MarvelClient {
       )
     }
     const json = await response.json()
-    console.log('%o', json)
     const parsed = MarvelPublicCharactersResponseSchema.safeParse(json)
     if (!parsed.success) {
       const errors = parsed.error.errors.map(
@@ -127,5 +176,7 @@ export class MarvelClient {
         `Error in parsing the response from the API call: ${errors.join('\n')}`
       )
     }
+
+    console.log('%s', JSON.stringify(parsed.data, null, 2))
   }
 }

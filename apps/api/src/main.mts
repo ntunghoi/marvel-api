@@ -1,6 +1,12 @@
 import dotenv from 'dotenv'
 import { Env } from '@humanwhocodes/env'
+import dayjs from 'dayjs'
+import timezone from 'dayjs/plugin/timezone.js'
+import utc from 'dayjs/plugin/utc.js'
 import { MarvelClient } from './services/marvel-service.mjs'
+
+dayjs.extend(utc)
+dayjs.extend(timezone)
 
 dotenv.config()
 const env = new Env()
@@ -25,14 +31,16 @@ const loadConfig = (): Config => {
   }
 }
 const main = async () => {
-  console.log('Hello World')
   try {
     const config = loadConfig()
     const marvelClient = new MarvelClient({
       publicKey: config.marvel.publicKey,
       privateKey: config.marvel.privateKey,
     })
-    await marvelClient.getComicCharacters()
+    await marvelClient.getComicCharacters({
+      name: 'X-Men (Ultimate)',
+      modifiedSince: new Date('1969-09-24'),
+    })
   } catch (error) {
     console.log(`Error in running the application: ${error}`)
   }

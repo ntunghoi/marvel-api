@@ -29,6 +29,7 @@
   },
   "dependencies": {
     "@humanwhocodes/env": "^3.0.5",
+    "dayjs": "^1.11.13",
     "dotenv": "^16.4.7",
     "zod": "^3.23.8"
   }
