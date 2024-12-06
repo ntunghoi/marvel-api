@@ -15,6 +15,7 @@
 node_modules
 dist
 tmp
+coverage
 apps/api/src/protos/gen
 
 .nx/cache
