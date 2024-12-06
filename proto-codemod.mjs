@@ -1,3 +1,4 @@
+import fs from 'fs'
 import { readFileSync, readdirSync, writeFileSync } from 'fs'
 import path, { join } from 'path'
 import { fileURLToPath } from 'url'
@@ -9,16 +10,20 @@ const __dirname = path.dirname(__filename)
 
 const absolutePathToDir = join(__dirname, relativePathToDirArg)
 
-readdirSync(absolutePathToDir)
+readdirSync(absolutePathToDir, { recursive: true })
   .filter((/** @type {string} */ filename) => filename.endsWith('.ts'))
   .forEach((filename) => {
-    console.log(filename, absolutePathToDir)
     const pathToFile = join(absolutePathToDir, filename)
 
     const file = readFileSync(pathToFile, { encoding: 'utf-8' })
 
     // Looking for all relative import paths and appending ".js" to the end of the import path
-    const modifiedFile = file.replaceAll(/(import .* '\.+\/.*)';/g, "$1.js';")
+    const modifiedFile = file.replaceAll(/(import .* '\.+\/.*)';/g, "$1.mjs';")
 
     writeFileSync(pathToFile, modifiedFile)
+    const originalFilename = pathToFile
+    const updatedFilename = originalFilename.replace(/\.ts$/, '.mts')
+    fs.rename(originalFilename, updatedFilename, () => {
+      console.log(`Rename file from ${originalFilename} to ${updatedFilename}`)
+    })
   })
