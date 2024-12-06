@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package services.marvel.v1;
+
+service MarvelService {
+  rpc getComicCharacters (GetComicCharactersRequest) returns (GetComicCharactersResponse);
+}
+
+message GetComicCharactersRequest {
+}
+
+message GetComicCharactersResponse {
+  string copyright = 1;
+  string attributionText = 2;
+  string attributionHTML = 3;
+}
