@@ -5920,6 +5920,7 @@ __metadata:
     jest-environment-node: "npm:^29.7.0"
     nx: "npm:20.1.4"
     prettier: "npm:^2.6.2"
+    protoc-gen-ts: "npm:^0.8.7"
     ts-jest: "npm:^29.1.0"
     ts-node: "npm:10.9.1"
     tslib: "npm:^2.3.0"
@@ -6638,6 +6639,15 @@ __metadata:
     "@types/node": "npm:>=13.7.0"
     long: "npm:^5.0.0"
   checksum: 10c0/a5460a63fe596523b9a067cbce39a6b310d1a71750fda261f076535662aada97c24450e18c5bc98a27784f70500615904ff1227e1742183509f0db4fdede669b
+  languageName: node
+  linkType: hard
+
+"protoc-gen-ts@npm:^0.8.7":
+  version: 0.8.7
+  resolution: "protoc-gen-ts@npm:0.8.7"
+  bin:
+    protoc-gen-ts: protoc-gen-ts.js
+  checksum: 10c0/1af3ce3c31b81f374b3fc704a770715432ebf7f8caeb5b22e68fb6e378159a659afa3c88ca6d81540f324c3db31efec19877c41c800895cbbbf4926392c234a6
   languageName: node
   linkType: hard
 

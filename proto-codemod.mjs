@@ -3,7 +3,7 @@ import { readFileSync, readdirSync, writeFileSync } from 'fs'
 import path, { join } from 'path'
 import { fileURLToPath } from 'url'
 
-const relativePathToDirArg = process.argv[2] ?? 'apps/api/src/protos/gen'
+const relativePathToDirArg = process.argv[2]
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)

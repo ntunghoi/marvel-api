@@ -17,6 +17,7 @@ dist
 tmp
 coverage
 apps/api/src/protos/gen
+apps/terminal-client/src/gen
 
 .nx/cache
 .nx/workspace-data
