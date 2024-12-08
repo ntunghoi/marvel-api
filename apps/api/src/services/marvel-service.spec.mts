@@ -47,7 +47,7 @@ describe('Marvel Service', () => {
         privateKey: 'private_key',
       })
 
-      expect(marvelClient.getComicCharacters()).rejects.toThrow(
+      expect(marvelClient.getComicCharacters({})).rejects.toThrow(
         'Error with status (401) in retrieving data: Missing one or more required fields: hash, api key and timestamp'
       )
     })
@@ -91,7 +91,7 @@ describe('Marvel Service', () => {
     })
 
     it(`Get comic data without any criteria`, async () => {
-      const data = await marvelClient.getComicCharacters()
+      const data = await marvelClient.getComicCharacters({})
     })
   })
 })

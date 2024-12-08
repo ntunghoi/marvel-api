@@ -179,7 +179,7 @@ export class MarvelClient {
     this._privateKey = privateKey
   }
   getComicCharacters = async (
-    params?: z.infer<typeof GetComicCharactersParamsSchema>
+    params: z.infer<typeof GetComicCharactersParamsSchema>
   ): Promise<z.infer<typeof MarvelPublicCharactersResponseSchema>> => {
     console.log(`params: ${JSON.stringify(params, null, 2)}`)
     const url = composeUrl({
