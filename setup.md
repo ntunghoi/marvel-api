@@ -33,6 +33,8 @@ redis-cli INFO
 redis-cli -h 0.0.0.0 -p 6379
 > PUBSUB CHANNELS
 > publish MARVEL_UPDATE_CHANNEL <message>
+
+> KEYS *
 ```
 
 ## Demo

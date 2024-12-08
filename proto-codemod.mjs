@@ -18,7 +18,9 @@ readdirSync(absolutePathToDir, { recursive: true })
     const file = readFileSync(pathToFile, { encoding: 'utf-8' })
 
     // Looking for all relative import paths and appending ".js" to the end of the import path
-    const modifiedFile = file.replaceAll(/(import .* '\.+\/.*)';/g, "$1.mjs';")
+    const modifiedFile = file
+      .replaceAll(/(import .* '\.+\/.*)';/g, "$1.mjs';")
+      .replaceAll(/(import .* "\.*\/.*)";/g, '$1.mjs";')
 
     writeFileSync(pathToFile, modifiedFile)
     const originalFilename = pathToFile

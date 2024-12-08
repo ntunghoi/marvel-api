@@ -2,7 +2,6 @@ import crypto from 'crypto'
 import { URLSearchParams } from 'url'
 import * as z from 'zod'
 import dayjs from 'dayjs'
-import { GetComicCharactersResponse } from '../protos/gen/services/marvel/v1/GetComicCharactersResponse.mjs'
 
 const BASE_URL = `https://gateway.marvel.com`
 const composeUrl = ({
@@ -104,6 +103,47 @@ const MarvelPublicCharactersResponseSchema = z.object({
   }),
 })
 
+const MarvelPublicCharacterResponseSchema = z.object({
+  code: z.number().nonnegative(),
+  status: z.string().min(1),
+  copyright: z.string().min(1),
+  attributionText: z.string().min(1),
+  attributionHTML: z.string().min(1),
+  etag: z.string().min(1),
+  data: z.object({
+    offset: z.number().nonnegative(),
+    limit: z.number().nonnegative(),
+    total: z.number().nonnegative(),
+    count: z.number().nonnegative(),
+    results: z
+      .object({
+        id: z.number().nonnegative(),
+        name: z.string().min(1),
+        description: z.string().min(0),
+        modified: z
+          .string()
+          .min(1)
+          .transform((rawValue) => dayjs(rawValue, 'YYYY-MM-DDTHH:MM:SSZZ')),
+        thumbnail: z.object({
+          path: z.string().url(),
+          extension: z.string(),
+        }),
+        resourceURI: z.string().url(),
+        comics: getListSchema(ComicsSummarySchema),
+        stories: getListSchema(StorySummarySchema),
+        events: getListSchema(EventSummarySchema),
+        series: getListSchema(SeriesSummarySchema),
+        urls: z
+          .object({
+            type: z.string().optional(),
+            url: z.string().url().optional(),
+          })
+          .array(),
+      })
+      .array(),
+  }),
+})
+
 export type MarvelPublicCharactersResponseType = z.infer<
   typeof MarvelPublicCharactersResponseSchema
 >
@@ -119,6 +159,10 @@ const GetComicCharactersParamsSchema = z.object({
   orderBy: z.enum(['name', 'modified', '-name', '-modified']).optional(),
   limit: z.coerce.number().int().min(1).optional(),
   offset: z.coerce.number().int().nonnegative().optional(),
+})
+
+const GetComicCharacterParamsSchema = z.object({
+  characterId: z.coerce.number().int().positive(),
 })
 
 export class MarvelClient {
@@ -158,6 +202,38 @@ export class MarvelClient {
           }
         })
       },
+    })
+    const response = await fetch(url)
+    if (!response.ok) {
+      const status = response.status
+      const text = await response.text()
+      throw new Error(
+        `Error with status (${status}) in retrieving data: ${text}`
+      )
+    }
+    const json = await response.json()
+    const parsed = MarvelPublicCharactersResponseSchema.safeParse(json)
+    if (!parsed.success) {
+      const errors = parsed.error.errors.map(
+        (error) => `${error.code}: ${error.message} (${error.path})`
+      )
+      console.log(
+        `Error in parsing the response from the API call: ${errors.join('\n')}`
+      )
+    }
+
+    console.log('%s', JSON.stringify(parsed.data, null, 2))
+    console.log(url.toString())
+    return parsed.data
+  }
+
+  getComicCharacter = async (
+    params: z.infer<typeof GetComicCharacterParamsSchema>
+  ): Promise<z.infer<typeof MarvelPublicCharacterResponseSchema>> => {
+    const url = composeUrl({
+      publicKey: this._publicKey,
+      privateKey: this._privateKey,
+      path: `/v1/public/characters/${params.characterId}`,
     })
     const response = await fetch(url)
     if (!response.ok) {
