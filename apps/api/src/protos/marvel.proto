@@ -91,7 +91,24 @@ message Data {
   repeated Result results = 5;
 }
 
+enum OrderBy {
+  name_asc = 0;
+  modified_asc = 1;
+  name_desc = 2;
+  modified_desc = 3;
+}
+
 message GetComicCharactersRequest {
+  string name = 1;
+  string nameStartsWith = 2;
+  google.protobuf.Timestamp modifiedSince = 3;
+  string comics = 4;
+  string series = 5;
+  string events = 6;
+  string stories = 7;
+  OrderBy orderBy = 8;
+  int32 limit = 9;
+  int32 offset = 10;
 }
 
 message GetComicCharactersResponse {
@@ -108,7 +125,6 @@ message GetComicCharactersResponse {
 message GetComicCharacterRequest {
   int32 characterId = 1;
   bool isHardReload = 2;
-  
 }
 
 message GetComicCharacterResponse {

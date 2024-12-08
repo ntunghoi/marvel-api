@@ -12,6 +12,8 @@ import { MarvelClient } from './services/marvel-service.mjs'
 import { GetComicCharacterRequest } from './protos/gen/services/marvel/v1/GetComicCharacterRequest.mjs'
 import { GetComicCharacterResponse } from './protos/gen/services/marvel/v1/GetComicCharacterResponse.mjs'
 
+const ENUM_ORDER_BY = ['name', 'modified', '-name', '-modified']
+
 class MarvelProxy {
   _redisClient: RedisClient
   _marvelClient: MarvelClient
@@ -25,79 +27,106 @@ class MarvelProxy {
   }
 
   getComicCharacters(
-    _: gRPC.ServerUnaryCall<
+    call: gRPC.ServerUnaryCall<
       GetComicCharactersRequest,
       GetComicCharactersResponse
     >,
     callback: gRPC.sendUnaryData<GetComicCharactersResponse>
   ) {
-    this._marvelClient.getComicCharacters({}).then((response) => {
-      callback(null, {
-        code: response.code,
-        status: response.status,
-        copyright: response.copyright,
-        attributionText: response.attributionText,
-        attributionHTML: response.attributionHTML,
-        data: {
-          limit: response.data?.limit,
-          count: response.data?.count,
-          offset: response.data?.offset,
-          results: response.data.results.map((result) => ({
-            id: result.id,
-            name: result.name,
-            description: result.description,
-            modified: {
-              seconds: result.modified.toDate().getTime(),
-            },
-            thumbnail: {
-              path: result.thumbnail?.path,
-              extension: result.thumbnail.extension,
-            },
-            resourceURI: result.resourceURI,
-            comics: {
-              available: result.comics.available,
-              collectionURL: result.comics.collectionURI,
-              items: result.comics.items.map((item) => ({
-                resourceURI: item.resourceURI,
-                name: item.name,
-              })),
-              returned: result.comics.returned,
-            },
-            series: {
-              available: result.series.available,
-              collectionURL: result.series.collectionURI,
-              items: result.series.items.map((item) => ({
-                resourceURI: item.resourceURI,
-                name: item.name,
-              })),
-              returned: result.series.returned,
-            },
-            stories: {
-              available: result.stories.available,
-              collectionURL: result.stories.collectionURI,
-              items: result.stories.items.map((item) => ({
-                resourceURI: item.resourceURI,
-                name: item.name,
-              })),
-              returned: result.stories.returned,
-            },
-            events: {
-              available: result.events.available,
-              collectionURL: result.events.collectionURI,
-              items: result.events.items.map((item) => ({
-                resourceURI: item.resourceURI,
-                name: item.name,
-              })),
-              returned: result.events.returned,
-            },
-            urls: result.urls.map((url) => ({
-              type: url.type,
-              url: url.url,
-            })),
-          })),
-        },
+    const {
+      name,
+      nameStartsWith,
+      modifiedSince,
+      comics,
+      series,
+      events,
+      stories,
+      orderBy,
+      limit,
+      offset,
+    } = call.request
+    this._marvelClient
+      .getComicCharacters({
+        name,
+        nameStartsWith,
+        modifiedSince: modifiedSince
+          ? new Date(modifiedSince.seconds as number)
+          : null,
+        comics: comics?.split(',') ?? null,
+        series: series?.split(',') ?? null,
+        events: events?.split(',') ?? null,
+        stories: stories?.split(',') ?? null,
+        orderBy: ENUM_ORDER_BY[orderBy],
+        limit,
+        offset,
       })
-    })
+      .then((response) => {
+        callback(null, {
+          code: response.code,
+          status: response.status,
+          copyright: response.copyright,
+          attributionText: response.attributionText,
+          attributionHTML: response.attributionHTML,
+          data: {
+            limit: response.data?.limit,
+            count: response.data?.count,
+            offset: response.data?.offset,
+            results: response.data.results.map((result) => ({
+              id: result.id,
+              name: result.name,
+              description: result.description,
+              modified: {
+                seconds: result.modified.toDate().getTime(),
+              },
+              thumbnail: {
+                path: result.thumbnail?.path,
+                extension: result.thumbnail.extension,
+              },
+              resourceURI: result.resourceURI,
+              comics: {
+                available: result.comics.available,
+                collectionURL: result.comics.collectionURI,
+                items: result.comics.items.map((item) => ({
+                  resourceURI: item.resourceURI,
+                  name: item.name,
+                })),
+                returned: result.comics.returned,
+              },
+              series: {
+                available: result.series.available,
+                collectionURL: result.series.collectionURI,
+                items: result.series.items.map((item) => ({
+                  resourceURI: item.resourceURI,
+                  name: item.name,
+                })),
+                returned: result.series.returned,
+              },
+              stories: {
+                available: result.stories.available,
+                collectionURL: result.stories.collectionURI,
+                items: result.stories.items.map((item) => ({
+                  resourceURI: item.resourceURI,
+                  name: item.name,
+                })),
+                returned: result.stories.returned,
+              },
+              events: {
+                available: result.events.available,
+                collectionURL: result.events.collectionURI,
+                items: result.events.items.map((item) => ({
+                  resourceURI: item.resourceURI,
+                  name: item.name,
+                })),
+                returned: result.events.returned,
+              },
+              urls: result.urls.map((url) => ({
+                type: url.type,
+                url: url.url,
+              })),
+            })),
+          },
+        })
+      })
   }
 
   getComicCharacter(
@@ -200,13 +229,6 @@ class MarvelProxy {
 
   getChangeNotifications(call) {
     calls.push(call)
-    /*
-    items.forEach((item) => {
-      call.write({
-        remarks: `Item: ${item}`,
-      })
-    })
-    */
   }
 }
 
