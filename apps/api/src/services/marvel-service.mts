@@ -2,6 +2,7 @@ import crypto from 'crypto'
 import { URLSearchParams } from 'url'
 import * as z from 'zod'
 import dayjs from 'dayjs'
+import { GetComicCharactersResponse } from '../protos/gen/services/marvel/v1/GetComicCharactersResponse.mjs'
 
 const BASE_URL = `https://gateway.marvel.com`
 const composeUrl = ({
@@ -58,7 +59,7 @@ const EventSummarySchema = z.object({
 })
 
 const SeriesSummarySchema = z.object({
-  reourceURI: z.string().url().optional(),
+  resourceURI: z.string().url().optional(),
   name: z.string().optional(),
 })
 
@@ -135,7 +136,7 @@ export class MarvelClient {
   }
   getComicCharacters = async (
     params?: z.infer<typeof GetComicCharactersParamsSchema>
-  ) => {
+  ): Promise<z.infer<typeof MarvelPublicCharactersResponseSchema>> => {
     const url = composeUrl({
       publicKey: this._publicKey,
       privateKey: this._privateKey,
@@ -178,5 +179,7 @@ export class MarvelClient {
     }
 
     console.log('%s', JSON.stringify(parsed.data, null, 2))
+    console.log(url.toString())
+    return parsed.data
   }
 }

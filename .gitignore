@@ -23,3 +23,5 @@ apps/terminal-client/src/gen
 .nx/workspace-data
 
 .env
+
+samples

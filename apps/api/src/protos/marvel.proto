@@ -1,9 +1,12 @@
 syntax = "proto3";
 
+import "google/protobuf/timestamp.proto";
+
 package services.marvel.v1;
 
 service MarvelService {
-  rpc getComicCharacters (GetComicCharactersRequest) returns (GetComicCharactersResponse);
+  rpc getComicCharacters (GetComicCharactersRequest) returns (GetComicCharactersResponse) {};
+  rpc getChangeNotifications (GetChangeNotificationRequest) returns (stream GetChangeNotificationResponse) {};
 }
 
 message GetComicCharactersRequest {
@@ -13,4 +16,94 @@ message GetComicCharactersResponse {
   string copyright = 1;
   string attributionText = 2;
   string attributionHTML = 3;
+
+  message Thumbnail {
+    string path = 1;
+    string extension = 2;
+  }
+
+  message ComicsItem {
+    string resourceURI = 1;
+    string name = 2;
+  }
+
+  message Comics {
+    int32 available = 1;
+    string collectionURL = 2;
+    repeated ComicsItem items = 3;
+    int32 returned = 4;
+  }
+
+  message SeriesItem {
+    string resourceURI = 1;
+    string name = 2;
+  }
+
+  message Series {
+    int32 available = 1;
+    string collectionURL = 2;
+    repeated SeriesItem items = 3;
+    int32 returned = 4;
+  }
+
+  message StoriesItem {
+    string resourceURI = 1;
+    string name = 2;
+    string type = 3;
+  }
+
+  message Stories {
+    int32 available = 1;
+    string collectionURL = 2;
+    repeated StoriesItem items = 3;
+    int32 returned = 4;
+  }
+
+  message EventsItem {
+    string resourceURI = 1;
+    string name = 2;
+  }
+
+  message Events {
+    int32 available = 1;
+    string collectionURL = 2;
+    repeated EventsItem items = 3;
+    int32 returned = 4;
+  }
+
+  message URL {
+    string type = 1;
+    string uri = 2;
+  }
+
+  message Result {
+    int32 id = 1;
+    string name = 2;
+    string description = 3;
+    google.protobuf.Timestamp modified = 4;
+    Thumbnail thumbnail = 5;
+    string resourceURI = 6;
+    Comics comics = 7;
+    Series series = 8;
+    Stories stories = 9;
+    Events events = 10;
+    repeated URL urls = 11;
+  }
+
+  message Data {
+    int32 offset = 1;
+    int32 limit = 2;
+    int32 total = 3;
+    int32 count = 4;
+    repeated Result results = 5;
+  }
+
+  Data data = 4;
+}
+
+message GetChangeNotificationRequest {
+}
+
+message GetChangeNotificationResponse {
+  string remarks = 1;
 }
