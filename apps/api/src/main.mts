@@ -13,13 +13,21 @@ import { GetComicCharacterResponse } from './protos/gen/services/marvel/v1/GetCo
 import { Config, loadConfig } from './config.mjs'
 import { RedisClient } from './services/redis-service.mjs'
 import { MarvelServer } from './marvel-server.mjs'
+import {
+  LocalCacheService,
+  RemoteCacheService,
+} from './services/cache-service.mjs'
 
 dotenv.config()
 const env = new Env()
 
 const startServer = async (config: Config) => {
+  console.log(`Config: ${JSON.stringify(config, null, 2)}`)
+  const cacheService = config.isLocalCache
+    ? new LocalCacheService()
+    : new RemoteCacheService(config.redis.host, config.redis.port)
   const redisClient = new RedisClient(config.redis.host, config.redis.port)
-  const marvelServer = new MarvelServer(config, redisClient)
+  const marvelServer = new MarvelServer(config, cacheService)
   redisClient.subscribe(config.redis.channelName, marvelServer.onChangeNotified)
 
   const packageDef = protoLoader.loadSync(config.protoPath)

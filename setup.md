@@ -35,6 +35,7 @@ redis-cli -h 0.0.0.0 -p 6379
 > publish MARVEL_UPDATE_CHANNEL <message>
 
 > KEYS *
+> DEL [...<key>]
 ```
 
 ## Demo

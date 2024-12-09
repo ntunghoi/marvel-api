@@ -6,8 +6,8 @@ import { GetComicCharacterRequest } from './protos/gen/services/marvel/v1/GetCom
 import { GetComicCharacterResponse } from './protos/gen/services/marvel/v1/GetComicCharacterResponse.mjs'
 import { GetChangeNotificationRequest__Output } from './protos/gen/services/marvel/v1/GetChangeNotificationRequest.mjs'
 import { GetChangeNotificationResponse } from './protos/gen/services/marvel/v1/GetChangeNotificationResponse.mjs'
-import { RedisClient } from './services/redis-service.mjs'
 import { MarvelClient } from './services/marvel-service.mjs'
+import { CacheService } from './services/cache-service.mjs'
 
 const ENUM_ORDER_BY = ['name', 'modified', '-name', '-modified']
 
@@ -19,11 +19,11 @@ const calls = new Array<
 >()
 
 export class MarvelServer {
-  _redisClient: RedisClient
+  _cacheService: CacheService
   _marvelClient: MarvelClient
 
-  constructor(config: Config, redisClient: RedisClient) {
-    this._redisClient = redisClient
+  constructor(config: Config, cacheService: CacheService) {
+    this._cacheService = cacheService
     this._marvelClient = new MarvelClient({
       publicKey: config.marvel.publicKey,
       privateKey: config.marvel.privateKey,
@@ -148,8 +148,8 @@ export class MarvelServer {
       })
     } else {
       const isHardReload = call.request.isHardReload
-      this._redisClient
-        .readCache(characterId.toString(), isHardReload)
+      this._cacheService
+        .get(characterId.toString(), isHardReload)
         .then((value) => {
           if (value !== null) {
             console.log('From cache')
@@ -223,7 +223,7 @@ export class MarvelServer {
                     })),
                   },
                 }
-                this._redisClient.writeCache(
+                this._cacheService.set(
                   characterId.toString(),
                   JSON.stringify(value)
                 )

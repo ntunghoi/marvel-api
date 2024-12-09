@@ -6,6 +6,7 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 export type Config = {
+  isLocalCache: boolean
   redis: {
     host: string
     port: number
@@ -28,8 +29,12 @@ export const loadConfig = (env: Env): Config => {
     const marvelPublicKey = env.require('MARVEL_PUBLIC_KEY')
     const hostPort = env.require('HOST_PORT')
     const protoPath = env.require('PROTO_PATH')
+    const isLocalCache = JSON.parse(
+      env.require('IS_LOCAL_CACHE').toLocaleLowerCase()
+    )
 
     return {
+      isLocalCache,
       redis: {
         host: redisHost,
         port: redisPort,
