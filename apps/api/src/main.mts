@@ -22,7 +22,6 @@ dotenv.config()
 const env = new Env()
 
 const startServer = async (config: Config) => {
-  console.log(`Config: ${JSON.stringify(config, null, 2)}`)
   const cacheService = config.isLocalCache
     ? new LocalCacheService()
     : new RemoteCacheService(config.redis.host, config.redis.port)

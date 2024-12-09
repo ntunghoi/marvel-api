@@ -4,11 +4,12 @@ import redis from 'redis'
 export interface CacheService {
   get: (key: string, isHardReload: boolean) => Promise<string | null>
   set: (key: string, value: string) => Promise<void>
-  del: (key: string) => Promise<unknown>
+  del: (key: string) => Promise<void>
 }
 
 export class LocalCacheService implements CacheService {
   _inMemCache = new Map<string, string>()
+  _mutex = Promise.resolve()
 
   async get(key: string, isHardReload: boolean = false) {
     console.log(`Local Cache: ${[...this._inMemCache.keys()]}`)
@@ -17,13 +18,30 @@ export class LocalCacheService implements CacheService {
   }
 
   async set(key: string, value: string) {
-    this._inMemCache.set(key, value)
+    await this._mutex
+    this._mutex = (async () => {
+      try {
+        this._inMemCache.set(key, value)
+
+        return Promise.resolve()
+      } catch (error) {
+        this._mutex = Promise.resolve()
+        throw error
+      }
+    })()
   }
 
   async del(key: string) {
-    this._inMemCache.delete(key)
-
-    return Promise.resolve()
+    await this._mutex
+    this._mutex = (async () => {
+      try {
+        this._inMemCache.delete(key)
+        return Promise.resolve()
+      } catch (error) {
+        this._mutex = Promise.resolve()
+        throw error
+      }
+    })()
   }
 }
 
