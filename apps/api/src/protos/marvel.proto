@@ -117,9 +117,8 @@ message GetComicCharactersResponse {
   string copyright = 3;
   string attributionText = 4;
   string attributionHTML = 5;
-  string etag = 6;
 
-  Data data = 7;
+  Data data = 6;
 }
 
 message GetComicCharacterRequest {
@@ -133,9 +132,8 @@ message GetComicCharacterResponse {
   string copyright = 3;
   string attributionText = 4;
   string attributionHTML = 5;
-  string etag = 6;
 
-  Data data = 7;
+  Data data = 6;
 }
 
 message GetChangeNotificationRequest {
