@@ -241,8 +241,15 @@ export class MarvelServer {
 
   onChangeNotified(message: string) {
     console.log('Message: %o', message)
-    calls.forEach((call) => {
-      call.write({ characterId: message })
+    calls.forEach((call, index) => {
+      if (call.closed) {
+        console.log('Remove a registered client')
+        calls.splice(index, 1)
+      } else {
+        console.log('Notify a registered client')
+        call.write({ characterId: message })
+      }
     })
+    console.log(`Number of registered: ${calls.length}`)
   }
 }
