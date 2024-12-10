@@ -11,23 +11,37 @@ import { GetComicCharacterRequest } from './protos/gen/services/marvel/v1/GetCom
 import { GetComicCharacterResponse } from './protos/gen/services/marvel/v1/GetComicCharacterResponse.mjs'
 
 import { Config, loadConfig } from './config.mjs'
-import { RedisClient } from './services/redis-service.mjs'
 import { MarvelServer } from './marvel-server.mjs'
 import {
   LocalCacheService,
   RemoteCacheService,
 } from './services/cache-service.mjs'
+import { PubSubService } from './services/pub-sub-service.mjs'
 
 dotenv.config()
 const env = new Env()
 
-const startServer = async (config: Config) => {
+const startServer = async (
+  config: Config,
+  registerOnExitListener: (onExitListener: () => void) => void
+) => {
   const cacheService = config.isLocalCache
     ? new LocalCacheService()
-    : new RemoteCacheService(config.redis.host, config.redis.port)
-  const redisClient = new RedisClient(config.redis.host, config.redis.port)
+    : new RemoteCacheService(
+        config.redis.host,
+        config.redis.port,
+        registerOnExitListener
+      )
+  const pubSubService = new PubSubService(
+    config.redis.host,
+    config.redis.port,
+    registerOnExitListener
+  )
   const marvelServer = new MarvelServer(config, cacheService)
-  redisClient.subscribe(config.redis.channelName, marvelServer.onChangeNotified)
+  pubSubService.subscribe(
+    config.redis.channelName,
+    marvelServer.onChangeNotified
+  )
 
   const packageDef = protoLoader.loadSync(config.protoPath)
   const proto = gRPC.loadPackageDefinition(
@@ -79,11 +93,25 @@ const startServer = async (config: Config) => {
   )
 }
 
+const onExitListeners = new Array<() => void>()
+
+const cleanup = () => {
+  console.log('Clean up resources before the process exists')
+  for (const onExististener of onExitListeners) {
+    onExististener()
+  }
+}
+
+process.on('SIGINT', cleanup)
+process.on('SIGTERM', cleanup)
+
 const main = async () => {
   try {
     const config = loadConfig(env)
 
-    await startServer(config)
+    await startServer(config, (onExitListener) => {
+      onExitListeners.push(onExitListener)
+    })
   } catch (error) {
     console.error(error)
   }

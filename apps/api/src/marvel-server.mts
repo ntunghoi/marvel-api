@@ -148,89 +148,90 @@ export class MarvelServer {
       })
     } else {
       const isHardReload = call.request.isHardReload
-      this._cacheService
-        .get(characterId.toString(), isHardReload)
-        .then((value) => {
-          if (value !== null) {
-            console.log('From cache')
-            callback(null, JSON.parse(value))
-          } else {
-            this._marvelClient
-              .getComicCharacter({ characterId: call.request.characterId })
-              .then((response) => {
-                const value = {
-                  code: response.code,
-                  status: response.status,
-                  copyright: response.copyright,
-                  attributionText: response.attributionText,
-                  attributionHTML: response.attributionHTML,
-                  data: {
-                    limit: response.data?.limit,
-                    count: response.data?.count,
-                    offset: response.data?.offset,
-                    results: response.data.results.map((result) => ({
-                      id: result.id,
-                      name: result.name,
-                      description: result.description,
-                      modified: {
-                        seconds: result.modified.toDate().getTime(),
-                      },
-                      thumbnail: {
-                        path: result.thumbnail?.path,
-                        extension: result.thumbnail.extension,
-                      },
-                      resourceURI: result.resourceURI,
-                      comics: {
-                        available: result.comics.available,
-                        collectionURL: result.comics.collectionURI,
-                        items: result.comics.items.map((item) => ({
-                          resourceURI: item.resourceURI,
-                          name: item.name,
-                        })),
-                        returned: result.comics.returned,
-                      },
-                      series: {
-                        available: result.series.available,
-                        collectionURL: result.series.collectionURI,
-                        items: result.series.items.map((item) => ({
-                          resourceURI: item.resourceURI,
-                          name: item.name,
-                        })),
-                        returned: result.series.returned,
-                      },
-                      stories: {
-                        available: result.stories.available,
-                        collectionURL: result.stories.collectionURI,
-                        items: result.stories.items.map((item) => ({
-                          resourceURI: item.resourceURI,
-                          name: item.name,
-                        })),
-                        returned: result.stories.returned,
-                      },
-                      events: {
-                        available: result.events.available,
-                        collectionURL: result.events.collectionURI,
-                        items: result.events.items.map((item) => ({
-                          resourceURI: item.resourceURI,
-                          name: item.name,
-                        })),
-                        returned: result.events.returned,
-                      },
-                      urls: result.urls.map((url) => ({
-                        type: url.type,
-                        url: url.url,
+      const promise = isHardReload
+        ? Promise.resolve(null)
+        : this._cacheService.get(characterId.toString())
+      promise.then((value) => {
+        if (value !== null) {
+          console.log('From cache')
+          callback(null, JSON.parse(value))
+        } else {
+          this._marvelClient
+            .getComicCharacter({ characterId: call.request.characterId })
+            .then((response) => {
+              const value = {
+                code: response.code,
+                status: response.status,
+                copyright: response.copyright,
+                attributionText: response.attributionText,
+                attributionHTML: response.attributionHTML,
+                data: {
+                  limit: response.data?.limit,
+                  count: response.data?.count,
+                  offset: response.data?.offset,
+                  results: response.data.results.map((result) => ({
+                    id: result.id,
+                    name: result.name,
+                    description: result.description,
+                    modified: {
+                      seconds: result.modified.toDate().getTime(),
+                    },
+                    thumbnail: {
+                      path: result.thumbnail?.path,
+                      extension: result.thumbnail.extension,
+                    },
+                    resourceURI: result.resourceURI,
+                    comics: {
+                      available: result.comics.available,
+                      collectionURL: result.comics.collectionURI,
+                      items: result.comics.items.map((item) => ({
+                        resourceURI: item.resourceURI,
+                        name: item.name,
                       })),
+                      returned: result.comics.returned,
+                    },
+                    series: {
+                      available: result.series.available,
+                      collectionURL: result.series.collectionURI,
+                      items: result.series.items.map((item) => ({
+                        resourceURI: item.resourceURI,
+                        name: item.name,
+                      })),
+                      returned: result.series.returned,
+                    },
+                    stories: {
+                      available: result.stories.available,
+                      collectionURL: result.stories.collectionURI,
+                      items: result.stories.items.map((item) => ({
+                        resourceURI: item.resourceURI,
+                        name: item.name,
+                      })),
+                      returned: result.stories.returned,
+                    },
+                    events: {
+                      available: result.events.available,
+                      collectionURL: result.events.collectionURI,
+                      items: result.events.items.map((item) => ({
+                        resourceURI: item.resourceURI,
+                        name: item.name,
+                      })),
+                      returned: result.events.returned,
+                    },
+                    urls: result.urls.map((url) => ({
+                      type: url.type,
+                      url: url.url,
                     })),
-                  },
-                }
-                this._cacheService.set(
-                  characterId.toString(),
-                  JSON.stringify(value)
-                )
-                callback(null, value)
-              })
-          }
-        })
+                  })),
+                },
+              }
+              this._cacheService.set(
+                characterId.toString(),
+                JSON.stringify(value)
+              )
+              callback(null, value)
+            })
+        }
+      })
     }
   }
 
